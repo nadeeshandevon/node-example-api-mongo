@@ -1,0 +1,34 @@
+version: "3.9"
+
+services:
+  api:
+    build: .
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      # Fallback if not provided in .env
+      MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017/customer_api}
+      PORT: ${PORT:-3000}
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  mongo:
+    image: mongo:6.0
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "localhost/test", "--eval", "db.runCommand({ ping: 1 }).ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:
+
